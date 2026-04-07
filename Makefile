@@ -84,18 +84,21 @@ endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I./include
+INCLUDE_PATHS = -I. -Iinclude
 # INCLUDE_PATHS += -isystem ./external
 
 # Define any libraries required on linking
 # if you want to link libraries (libname.so or libname.a), use the -lname
 LDLIBS = -lstdc++exp
 
+# Define library paths containing required libs.
+LDFLAGS = -L.
+
 # Additional flags for compiler (if desired)
 #CFLAGS += -Wextra -Wmissing-prototypes -Wstrict-prototypes
 # resource file contains windows executable icon and properties
 # -Wl,--subsystem,windows hides the console window
-LDFLAGS += -Wl,--subsystem,windows
+# LDFLAGS = -Wl,--subsystem,windows
 
 # Define a recursive wildcard function
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -110,11 +113,7 @@ OBJS ?= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 MAKEFILE_PARAMS = $(PROJECT_NAME)
 
-ifeq ($(OS),Windows_NT)
-	MKDIR_P = if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
-else
-	MKDIR_P = mkdir -p $(OBJ_DIR)
-endif
+MKDIR_P = mkdir -p $(OBJ_DIR)
 
 # Default target entry
 all: $(PROJECT_NAME)
