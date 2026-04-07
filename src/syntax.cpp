@@ -34,118 +34,137 @@ const std::array<TYPE, AST::COUNT> AST::TYPES = { NUMBER, BOOLEAN, LITERAL, PARE
 
 const std::array<Type, AST::COUNT> AST::types = [] {
 	std::array<Type, COUNT> ts;
+
 	ts[NUMBER] = Type{NUMBER, "Number", {
 		Pattern{Lexic::TYPE::NUMINT,},
 		Pattern{Lexic::TYPE::NUMREAL,},
 	}, Type::Associativity::LTR};
+
 	ts[BOOLEAN] = Type{BOOLEAN, "Boolean", {
 		Pattern{Lexic::TYPE::BOOLTRUE,},
 		Pattern{Lexic::TYPE::BOOLFALSE,},
 	}, Type::Associativity::LTR};
+
 	ts[LITERAL] = Type{LITERAL, "Literal", {
 		Pattern{NUMBER,},
 		Pattern{BOOLEAN,},
 	}, Type::Associativity::LTR};
+
 	ts[PARENTHESIS] = Type{PARENTHESIS, "PARENTHESIS", {
 		Pattern{LITERAL,},
 		Pattern{Lexic::TYPE::IDENT},
 		Pattern{Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},
 	}, Type::Associativity::LTR};
+
 	ts[OP1] = Type{OP1, "Operators | 1", {
 		Pattern{PARENTHESIS,},
 		Pattern{OP1, Lexic::TYPE::OPINC},
 		Pattern{OP1, Lexic::TYPE::OPDEC},
-		// TODO:
-		// Function call
-		// Array subscripting
-		// Structure and union member access
-		// Structure and union member access through pointer
-		// Compound literal
+		Pattern{OP1, Lexic::TYPE::OPBRKOPEN, EXPRESSION, Lexic::TYPE::OPBRKCLOSE}, // Subscript
+		Pattern{OP1, Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},       // Call (simplified)
+		Pattern{OP1, Lexic::TYPE::OPDOT, Lexic::TYPE::IDENT},                      // Member
+		Pattern{OP1, Lexic::TYPE::OPARROW, Lexic::TYPE::IDENT},                    // Pointer Member
 	}, Type::Associativity::LTR};
+
 	ts[OP2] = Type{OP2, "Operators | 2", {
 		Pattern{OP1,},
 		Pattern{Lexic::TYPE::OPINC, OP2},
 		Pattern{Lexic::TYPE::OPDEC, OP2},
 		Pattern{Lexic::TYPE::OPSUM, OP2},
 		Pattern{Lexic::TYPE::OPSUB, OP2},
+		Pattern{Lexic::TYPE::OPNOT, OP2},
+		Pattern{Lexic::TYPE::OPBNOT, OP2},
+		Pattern{Lexic::TYPE::OPAND, OP2},  // Address-of
+		Pattern{Lexic::TYPE::OPMUL, OP2},  // Dereference
+		Pattern{Lexic::TYPE::SIZEOF, OP2},
 		// TODO:
-		// Logical NOT and bitwise NOT
 		// Cast
-		// Indirection (dereference)
-		// Address-of
-		// Size-of
 		// Alignment requirement
 	}, Type::Associativity::RTL};
+
 	ts[OP3] = Type{OP3, "Operators | 3", {
 		Pattern{OP2,},
 		Pattern{OP3, Lexic::TYPE::OPMUL, OP2},
 		Pattern{OP3, Lexic::TYPE::OPDIV, OP2},
 		Pattern{OP3, Lexic::TYPE::OPREM, OP2},
 	}, Type::Associativity::LTR};
+
 	ts[OP4] = Type{OP4, "Operators | 4", {
 		Pattern{OP3,},
 		Pattern{OP4, Lexic::TYPE::OPSUM, OP3},
 		Pattern{OP4, Lexic::TYPE::OPSUB, OP3},
 	}, Type::Associativity::LTR};
+
 	ts[OP5] = Type{OP5, "Operators | 5", {
 		Pattern{OP4,},
-		// TODO:
-		// Bitwise left shift and right shift
+		Pattern{OP5, Lexic::TYPE::OPSHL, OP4},
+		Pattern{OP5, Lexic::TYPE::OPSHR, OP4},
 	}, Type::Associativity::LTR};
+
 	ts[OP6] = Type{OP6, "Operators | 6", {
 		Pattern{OP5,},
-		// Relational operators < and <=
-		// Relational operators > and >=
+		Pattern{OP6, Lexic::TYPE::OPLT, OP5},
+		Pattern{OP6, Lexic::TYPE::OPLE, OP5},
+		Pattern{OP6, Lexic::TYPE::OPGT, OP5},
+		Pattern{OP6, Lexic::TYPE::OPGE, OP5},
 	}, Type::Associativity::LTR};
+
 	ts[OP7] = Type{OP7, "Operators | 7", {
 		Pattern{OP6,},
 		Pattern{OP7, Lexic::TYPE::OPEQ, OP6},
 		Pattern{OP7, Lexic::TYPE::OPNEQ, OP6},
 	}, Type::Associativity::LTR};
+
 	ts[OP8] = Type{OP8, "Operators | 8", {
 		Pattern{OP7,},
-		// TODO:
-		// Bitwise AND
+		Pattern{OP8, Lexic::TYPE::OPAND, OP7},
 	}, Type::Associativity::LTR};
+
 	ts[OP9] = Type{OP9, "Operators | 9", {
 		Pattern{OP8,},
-		// TODO:
-		// Bitwise XOR (exclusive or)
+		Pattern{OP9, Lexic::TYPE::OPXOR, OP8},
 	}, Type::Associativity::LTR};
+
 	ts[OP10] = Type{OP10, "Operators | 10", {
 		Pattern{OP9,},
-		// TODO:
-		// Bitwise OR (inclusive or)
+		Pattern{OP10, Lexic::TYPE::OPOR, OP9},
 	}, Type::Associativity::LTR};
+
 	ts[OP11] = Type{OP11, "Operators | 11", {
 		Pattern{OP10,},
-		// TODO:
-		// Logical AND
+		Pattern{OP11, Lexic::TYPE::OPLAND, OP10},
 	}, Type::Associativity::LTR};
+
 	ts[OP12] = Type{OP12, "Operators | 12", {
 		Pattern{OP11,},
-		// TODO:
-		// Logical OR
+		Pattern{OP12, Lexic::TYPE::OPLOR, OP11},
 	}, Type::Associativity::LTR};
+
 	ts[OP13] = Type{OP13, "Operators | 13", {
 		Pattern{OP12,},
-		// TODO:
-		// Ternary conditional
+		Pattern{OP12, Lexic::TYPE::OPCOND, EXPRESSION, Lexic::TYPE::OPCOLON, OP13},
 	}, Type::Associativity::RTL};
+
 	ts[OP14] = Type{OP14, "Operators | 14", {
 		Pattern{OP13,},
-		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP14},
-		// TODO:
-		// Assignment by sum and difference
-		// Assignment by product, quotient, and remainder
-		// Assignment by bitwise left shift and right shift
-		// Assignment by bitwise AND, XOR, and OR
+		Pattern{OP1, Lexic::TYPE::OPASGN, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNSUM, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNSUB, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNMUL, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNDIV, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNREM, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNSHL, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNSHR, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNAND, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNXOR, OP14},
+		Pattern{OP1, Lexic::TYPE::OPASGNOR, OP14},
 	}, Type::Associativity::RTL};
+
 	ts[OP15] = Type{OP15, "Operators | 15", {
 		Pattern{OP14,},
-		// TODO:
-		// Comma
+		Pattern{OP15, Lexic::TYPE::OPCOMMA, OP14},
 	}, Type::Associativity::LTR};
+
 	ts[EXPRESSION] = Type{EXPRESSION, "Expression", {
 		Pattern{OP15,},
 	}, Type::Associativity::LTR};
