@@ -26,12 +26,12 @@ const std::array<TYPE, AST::COUNT> AST::TYPES = { NUMBER, BOOLEAN, LITERAL, PARE
 const std::array<Type, AST::COUNT> AST::types = [] {
 	std::array<Type, COUNT> ts;
 	ts[NUMBER] = Type{NUMBER, "Number", {
-		Pattern{Token::TYPE::NUMINT,},
-		Pattern{Token::TYPE::NUMREAL,},
+		Pattern{Lexic::TYPE::NUMINT,},
+		Pattern{Lexic::TYPE::NUMREAL,},
 	}};
 	ts[BOOLEAN] = Type{BOOLEAN, "Boolean", {
-		Pattern{Token::TYPE::BOOLTRUE,},
-		Pattern{Token::TYPE::BOOLFALSE,},
+		Pattern{Lexic::TYPE::BOOLTRUE,},
+		Pattern{Lexic::TYPE::BOOLFALSE,},
 	}};
 	ts[LITERAL] = Type{LITERAL, "Literal", {
 		Pattern{NUMBER,},
@@ -39,12 +39,12 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 	ts[PARENTHESIS] = Type{PARENTHESIS, "PARENTHESIS", {
 		Pattern{LITERAL,},
-		Pattern{Token::TYPE::PAOPEN, EXPRESSION, Token::TYPE::PACLOSE},
+		Pattern{Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},
 	}};
 	ts[OP1] = Type{OP1, "Operators | 1", {
 		Pattern{PARENTHESIS,},
-		Pattern{OP1, Token::TYPE::OPINC},
-		Pattern{OP1, Token::TYPE::OPDEC},
+		Pattern{OP1, Lexic::TYPE::OPINC},
+		Pattern{OP1, Lexic::TYPE::OPDEC},
 		// TODO:
 		// Function call
 		// Array subscripting
@@ -54,10 +54,10 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 	ts[OP2] = Type{OP2, "Operators | 2", {
 		Pattern{OP1,},
-		Pattern{Token::TYPE::OPINC, OP2},
-		Pattern{Token::TYPE::OPDEC, OP2},
-		Pattern{Token::TYPE::OPSUM, OP2},
-		Pattern{Token::TYPE::OPSUB, OP2},
+		Pattern{Lexic::TYPE::OPINC, OP2},
+		Pattern{Lexic::TYPE::OPDEC, OP2},
+		Pattern{Lexic::TYPE::OPSUM, OP2},
+		Pattern{Lexic::TYPE::OPSUB, OP2},
 		// TODO:
 		// Logical NOT and bitwise NOT
 		// Cast
@@ -68,14 +68,14 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 	ts[OP3] = Type{OP3, "Operators | 3", {
 		Pattern{OP2,},
-		Pattern{OP3, Token::TYPE::OPMUL, OP2},
-		Pattern{OP3, Token::TYPE::OPDIV, OP2},
-		Pattern{OP3, Token::TYPE::OPREM, OP2},
+		Pattern{OP3, Lexic::TYPE::OPMUL, OP2},
+		Pattern{OP3, Lexic::TYPE::OPDIV, OP2},
+		Pattern{OP3, Lexic::TYPE::OPREM, OP2},
 	}};
 	ts[OP4] = Type{OP4, "Operators | 4", {
 		Pattern{OP3,},
-		Pattern{OP4, Token::TYPE::OPSUM, OP3},
-		Pattern{OP4, Token::TYPE::OPSUB, OP3},
+		Pattern{OP4, Lexic::TYPE::OPSUM, OP3},
+		Pattern{OP4, Lexic::TYPE::OPSUB, OP3},
 	}};
 	ts[OP5] = Type{OP5, "Operators | 5", {
 		Pattern{OP4,},
@@ -89,8 +89,8 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 	ts[OP7] = Type{OP7, "Operators | 7", {
 		Pattern{OP6,},
-		Pattern{OP7, Token::TYPE::OPEQ, OP6},
-		Pattern{OP7, Token::TYPE::OPNEQ, OP6},
+		Pattern{OP7, Lexic::TYPE::OPEQ, OP6},
+		Pattern{OP7, Lexic::TYPE::OPNEQ, OP6},
 	}};
 	ts[OP8] = Type{OP8, "Operators | 8", {
 		Pattern{OP7,},
@@ -124,7 +124,7 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 	ts[OP14] = Type{OP14, "Operators | 14", {
 		Pattern{OP13,},
-		Pattern{OP14, Token::TYPE::OPASGN, OP13},
+		Pattern{OP14, Lexic::TYPE::OPASGN, OP13},
 		// TODO:
 		// Simple assignment
 		// Assignment by sum and difference
@@ -157,7 +157,7 @@ std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full,
 
 	for(int i=0;i<depth;i++)std::print("\t");
 	std::print("Attempting {} match of type {}, tokens: ", full ? "full" : "free", types[type].name);
-	printTokens(tks);
+	Lexic::tokenizer.print(tks);
 	std::cout.flush();
 
 	auto& pats = types[type].patterns;
@@ -167,7 +167,7 @@ std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full,
 		for(int i=0;i<depth;i++)std::print("\t");
 		std::print("Attempting pattern: [ ");
 		for (auto el : pat) {
-			if (std::holds_alternative<Token::TYPE>(el)) std::print("{} ", Token::name(std::get<Token::TYPE>(el)));
+			if (std::holds_alternative<Lexic::TYPE>(el)) std::print("{} ", Lexic::tokenizer.types[static_cast<size_t>(std::get<Lexic::TYPE>(el))].name);
 			else if (std::holds_alternative<TYPE>(el)) {
 				std::print("{} ", types[std::get<TYPE>(el)].name);
 				cnt++;
@@ -190,7 +190,7 @@ std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full,
 			auto& tk = tks[idx];
 			std::visit([&](auto&& arg){
 				using T = std::decay_t<decltype(arg)>;
-				if constexpr (std::is_same_v<T, Token::TYPE>) {
+				if constexpr (std::is_same_v<T, Lexic::TYPE>) {
 					if (tk.type == arg) {
 						for(int i=-1;i<depth;i++)std::print("\t");
 						std::println("Found token {} on idx {}", tk.str, idx); std::cout.flush();
@@ -288,12 +288,12 @@ AST::DrawNode* AST::build_draw_tree() const {
 	for (const auto& child : ordered_children) {
 		if (std::holds_alternative<Token>(child)) {
 			Token t = std::get<Token>(child);
-			if (t.type != Token::TYPE::PAOPEN && t.type != Token::TYPE::PACLOSE) {
+			if (t.type != Lexic::TYPE::PAOPEN && t.type != Lexic::TYPE::PACLOSE) {
 				if (d->text.empty()) d->text = t.str;
 				else d->children.push_back(new DrawNode{t.str});
-			} else if (t.type == Token::TYPE::PAOPEN || t.type == Token::TYPE::PACLOSE) {
+			} else if (t.type == Lexic::TYPE::PAOPEN || t.type == Lexic::TYPE::PACLOSE) {
 				// If we want to show parens, we treat them as part of the node text
-				d->text = (t.type == Token::TYPE::PAOPEN) ? "()" : d->text;
+				d->text = (t.type == Lexic::TYPE::PAOPEN) ? "()" : d->text;
 			}
 		} else {
 			d->children.push_back(std::get<AST>(child).build_draw_tree());

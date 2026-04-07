@@ -21,9 +21,9 @@ int main() {
 		// ErrorHandler eh;
 		// input = PreProcessor::process(input, eh);
 
-		auto tokens = Token::tokenize(input);
+		auto tokens = Lexic::tokenizer.tokenize(input);
 		// auto tokens = Token::tokenize(input, symbols, eh);
-		printTokens(tokens);
+		Lexic::tokenizer.print(tokens);
 
 		auto ast = AST::from_tokens(tokens);
 		// auto ast = AST::fromTokens(tokens, symbols, eh);

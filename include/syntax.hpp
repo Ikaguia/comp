@@ -10,7 +10,8 @@ struct AST {
 	using TYPE = enum { NUMBER, BOOLEAN, LITERAL, PARENTHESIS, OP1, OP2, OP3, OP4, OP5, OP6, OP7, OP8, OP9, OP10, OP11, OP12, OP13, OP14, OP15, EXPRESSION, COUNT };
 	static const std::array<TYPE, COUNT> TYPES;
 
-	using Pattern = std::vector<std::variant<Token::TYPE, TYPE>>;
+	using Token = Lexic::LexicTokenizer::Token;
+	using Pattern = std::vector<std::variant<Lexic::TYPE, TYPE>>;
 	struct Type {
 		TYPE type;
 		std::string name;
