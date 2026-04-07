@@ -17,6 +17,15 @@
 #include <string>
 #include <string_view>
 #include <charconv>
+#include <generator>
+
+template <typename T>
+auto gen = [](std::span<const T> sp, bool reverse) -> std::generator<T> {
+	if (!reverse) for (auto el : sp) co_yield el;
+	else for (auto el : sp | std::views::reverse) co_yield el;
+	co_return;
+};
+
 
 using TYPE = AST::TYPE;
 using Type = AST::Type;
@@ -28,19 +37,20 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	ts[NUMBER] = Type{NUMBER, "Number", {
 		Pattern{Lexic::TYPE::NUMINT,},
 		Pattern{Lexic::TYPE::NUMREAL,},
-	}};
+	}, Type::Associativity::LTR};
 	ts[BOOLEAN] = Type{BOOLEAN, "Boolean", {
 		Pattern{Lexic::TYPE::BOOLTRUE,},
 		Pattern{Lexic::TYPE::BOOLFALSE,},
-	}};
+	}, Type::Associativity::LTR};
 	ts[LITERAL] = Type{LITERAL, "Literal", {
 		Pattern{NUMBER,},
 		Pattern{BOOLEAN,},
-	}};
+	}, Type::Associativity::LTR};
 	ts[PARENTHESIS] = Type{PARENTHESIS, "PARENTHESIS", {
 		Pattern{LITERAL,},
+		Pattern{Lexic::TYPE::IDENT},
 		Pattern{Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP1] = Type{OP1, "Operators | 1", {
 		Pattern{PARENTHESIS,},
 		Pattern{OP1, Lexic::TYPE::OPINC},
@@ -51,7 +61,7 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		// Structure and union member access
 		// Structure and union member access through pointer
 		// Compound literal
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP2] = Type{OP2, "Operators | 2", {
 		Pattern{OP1,},
 		Pattern{Lexic::TYPE::OPINC, OP2},
@@ -65,81 +75,80 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		// Address-of
 		// Size-of
 		// Alignment requirement
-	}};
+	}, Type::Associativity::RTL};
 	ts[OP3] = Type{OP3, "Operators | 3", {
 		Pattern{OP2,},
 		Pattern{OP3, Lexic::TYPE::OPMUL, OP2},
 		Pattern{OP3, Lexic::TYPE::OPDIV, OP2},
 		Pattern{OP3, Lexic::TYPE::OPREM, OP2},
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP4] = Type{OP4, "Operators | 4", {
 		Pattern{OP3,},
 		Pattern{OP4, Lexic::TYPE::OPSUM, OP3},
 		Pattern{OP4, Lexic::TYPE::OPSUB, OP3},
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP5] = Type{OP5, "Operators | 5", {
 		Pattern{OP4,},
 		// TODO:
 		// Bitwise left shift and right shift
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP6] = Type{OP6, "Operators | 6", {
 		Pattern{OP5,},
 		// Relational operators < and <=
 		// Relational operators > and >=
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP7] = Type{OP7, "Operators | 7", {
 		Pattern{OP6,},
 		Pattern{OP7, Lexic::TYPE::OPEQ, OP6},
 		Pattern{OP7, Lexic::TYPE::OPNEQ, OP6},
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP8] = Type{OP8, "Operators | 8", {
 		Pattern{OP7,},
 		// TODO:
 		// Bitwise AND
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP9] = Type{OP9, "Operators | 9", {
 		Pattern{OP8,},
 		// TODO:
 		// Bitwise XOR (exclusive or)
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP10] = Type{OP10, "Operators | 10", {
 		Pattern{OP9,},
 		// TODO:
 		// Bitwise OR (inclusive or)
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP11] = Type{OP11, "Operators | 11", {
 		Pattern{OP10,},
 		// TODO:
 		// Logical AND
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP12] = Type{OP12, "Operators | 12", {
 		Pattern{OP11,},
 		// TODO:
 		// Logical OR
-	}};
+	}, Type::Associativity::LTR};
 	ts[OP13] = Type{OP13, "Operators | 13", {
 		Pattern{OP12,},
 		// TODO:
 		// Ternary conditional
-	}};
+	}, Type::Associativity::RTL};
 	ts[OP14] = Type{OP14, "Operators | 14", {
 		Pattern{OP13,},
-		Pattern{OP14, Lexic::TYPE::OPASGN, OP13},
+		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP14},
 		// TODO:
-		// Simple assignment
 		// Assignment by sum and difference
 		// Assignment by product, quotient, and remainder
 		// Assignment by bitwise left shift and right shift
 		// Assignment by bitwise AND, XOR, and OR
-	}};
+	}, Type::Associativity::RTL};
 	ts[OP15] = Type{OP15, "Operators | 15", {
 		Pattern{OP14,},
 		// TODO:
 		// Comma
-	}};
+	}, Type::Associativity::LTR};
 	ts[EXPRESSION] = Type{EXPRESSION, "Expression", {
 		Pattern{OP15,},
-	}};
+	}, Type::Associativity::LTR};
 
 	return ts;
 }();
@@ -151,7 +160,7 @@ std::optional<AST> AST::from_tokens(std::vector<Token> tks) {
 	return std::nullopt;
 }
 
-std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full, Memoization& mem, int globalStart, int globalEnd, int depth) {
+std::optional<AST::Match> AST::match(std::span<const Token> tks, TYPE type, bool full, Memoization& mem, int globalStart, int globalEnd, int depth) {
 	if (mem.contains({globalStart, globalEnd, full, type})) return mem[{globalStart, globalEnd, full, type}];
 	auto& result = mem[{globalStart, globalEnd, full, type}];
 
@@ -160,72 +169,81 @@ std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full,
 	Lexic::tokenizer.print(tks);
 	std::cout.flush();
 
-	auto& pats = types[type].patterns;
+	const auto& tp = types[type];
+	const auto& pats = tp.patterns;
+	bool isRTL = tp.associativity == Type::Associativity::RTL;
 	for (auto pat : pats | std::views::reverse) {
 		if (tks.size() < pat.size()) continue;
-		int cnt = 0;
+		int dynEls = 0;
 		for(int i=0;i<depth;i++)std::print("\t");
 		std::print("Attempting pattern: [ ");
 		for (auto el : pat) {
 			if (std::holds_alternative<Lexic::TYPE>(el)) std::print("{} ", Lexic::tokenizer.types[static_cast<size_t>(std::get<Lexic::TYPE>(el))].name);
 			else if (std::holds_alternative<TYPE>(el)) {
 				std::print("{} ", types[std::get<TYPE>(el)].name);
-				cnt++;
+				dynEls++;
 			}
 		}
 		std::println("]");
 		std::cout.flush();
 
-		int consumed = 0;
-		int idx = tks.size() - 1;
-		int pat_els_rem = pat.size();
+		int consumedTkns = 0, remainingTkns = std::ssize(tks);
+		int idxTknStart = isRTL ? 0 : std::ssize(tks) - 1;
+		int idxTkn = idxTknStart;
+		int step = isRTL ? 1 : -1;
+		int elsRem = pat.size();
 		bool pat_matches = true;
 		AST node{type};
-		for (auto el : pat | std::views::reverse) {
-			pat_els_rem--;
-			if (idx < pat_els_rem) {
+		for (auto el : gen<std::variant<Lexic::TYPE, TYPE>>(pat, !isRTL)) {
+			elsRem--;
+			if (remainingTkns < elsRem || idxTkn < 0 || idxTkn >= std::ssize(tks)) {
 				pat_matches = false;
 				break;
 			}
-			auto& tk = tks[idx];
+			auto& tk = tks[idxTkn];
 			std::visit([&](auto&& arg){
 				using T = std::decay_t<decltype(arg)>;
 				if constexpr (std::is_same_v<T, Lexic::TYPE>) {
 					if (tk.type == arg) {
 						for(int i=-1;i<depth;i++)std::print("\t");
-						std::println("Found token {} on idx {}", tk.str, idx); std::cout.flush();
+						std::println("Found token {} on idxTkn {}", tk.str, idxTkn); std::cout.flush();
 						node.children.push_back(tk);
-						idx--;
-						consumed++;
+						idxTkn += step;
+						consumedTkns++;
+						remainingTkns--;
 					} else pat_matches = false;
 				} else if constexpr (std::is_same_v<T, TYPE>) {
-					if (arg == type && idx == (std::ssize(tks) - 1)) {
+					if (arg == type && idxTkn == idxTknStart) {
 						pat_matches = false;
 						return;
 					}
-					int remaining = pat.size() - (node.children.size() + 1);
-					int start = (cnt == 1) ? remaining : 0;
-					bool fll = full && ((cnt == 1) || (remaining == 0));
-					auto res = match(tks.subspan(start, (idx+1) - start), arg, fll, mem, globalStart+start, globalStart + ((idx+1) - start), depth+1);
+					bool fll = full && ((dynEls == 1) || (elsRem == 0));
+					int start = isRTL ? idxTkn : (dynEls == 1 ? elsRem : 0);
+					int quant = dynEls == 1 ? remainingTkns - elsRem : remainingTkns;
+					auto span = tks.subspan(start, quant);
+					auto res = match(span, arg, fll, mem, globalStart+start, globalStart+start+quant, depth+1);
 					if (!res) pat_matches = false;
 					else {
-						auto [cnsmd, bnf] = *res;
+						auto [cnsmd, ast] = *res;
 						for(int i=-1;i<depth;i++)std::print("\t");
-						std::println("Found {} on range {}-{}", types[arg].name, (idx-cnsmd)+1, idx);
+						std::println("Found {} on range {}-{}", types[arg].name, isRTL ? start : start+quant-cnsmd, isRTL ? start+cnsmd-1 : start+quant-1);
 						for(int i=-1;i<depth;i++)std::print("\t");
-						std::println("{}", bnf.to_string());
+						std::println("{}", ast.to_string());
 						std::cout.flush();
-						node.children.push_back(std::move(bnf));
-						idx -= cnsmd;
-						consumed += cnsmd;
+						node.children.push_back(std::move(ast));
+						idxTkn += cnsmd * step;
+						consumedTkns += cnsmd;
+						remainingTkns -= cnsmd;
 					}
+					dynEls--;
 				}
 			}, el);
 			if (!pat_matches) break;
 		}
 		if (pat_matches) {
-			if (full && (idx > -1)) continue;
-			return result = Match{consumed, node};
+			if (full && ((isRTL && idxTkn < std::ssize(tks)) || (!isRTL && idxTkn > -1))) continue;
+			if (!isRTL) std::ranges::reverse(node.children);
+			return result = Match{consumedTkns, node};
 		}
 	}
 	return result = std::nullopt;
@@ -234,7 +252,7 @@ std::optional<AST::Match> AST::match(std::span<Token> tks, TYPE type, bool full,
 std::string AST::to_string() const {
 	std::string str;
 	str.reserve(string_sz());
-	for (const auto& child : children | std::views::reverse) {
+	for (const auto& child : children) {
 		if (!str.empty()) str += " ";
 		if (std::holds_alternative<AST>(child)) str += std::get<AST>(child).to_string();
 		else if (std::holds_alternative<Token>(child)) str += std::get<Token>(child).str;
@@ -280,33 +298,56 @@ void AST::render() const {
 AST::DrawNode* AST::build_draw_tree() const {
 	DrawNode* d = new DrawNode();
 
-	// Find the primary value/op for this node
-	// In your AST, children are stored in reverse (RTL)
-	auto ordered_children = children | std::views::reverse;
-	
-	// Filter out structural tokens like parentheses for the visual tree
-	for (const auto& child : ordered_children) {
+	// 1. Identify the "Pivot" token (the operator)
+	// For binary/unary ops, the operator is usually the token that ISN'T 
+	// an identifier or a literal. 
+	const Token* pivot = nullptr;
+	for (const auto& child : children) {
+		if (std::holds_alternative<Token>(child)) {
+			const Token& t = std::get<Token>(child);
+			// Simple heuristic: If it's an operator type, it's our pivot
+			if (t.type != Lexic::TYPE::IDENT && 
+				t.type != Lexic::TYPE::NUMINT && 
+				t.type != Lexic::TYPE::NUMREAL &&
+				t.type != Lexic::TYPE::BOOLTRUE &&
+				t.type != Lexic::TYPE::BOOLFALSE &&
+				t.type != Lexic::TYPE::PAOPEN && 
+				t.type != Lexic::TYPE::PACLOSE) {
+				pivot = &t;
+				break; 
+			}
+		}
+	}
+
+	if (pivot) d->text = pivot->str;
+
+	// 2. Process children
+	for (const auto& child : children) {
 		if (std::holds_alternative<Token>(child)) {
 			Token t = std::get<Token>(child);
-			if (t.type != Lexic::TYPE::PAOPEN && t.type != Lexic::TYPE::PACLOSE) {
-				if (d->text.empty()) d->text = t.str;
-				else d->children.push_back(new DrawNode{t.str});
-			} else if (t.type == Lexic::TYPE::PAOPEN || t.type == Lexic::TYPE::PACLOSE) {
-				// If we want to show parens, we treat them as part of the node text
-				d->text = (t.type == Lexic::TYPE::PAOPEN) ? "()" : d->text;
-			}
+			// Skip parentheses and the pivot we already used
+			if (&t == pivot || t.type == Lexic::TYPE::PAOPEN || t.type == Lexic::TYPE::PACLOSE) continue;
+			
+			d->children.push_back(new DrawNode{t.str});
 		} else {
 			d->children.push_back(std::get<AST>(child).build_draw_tree());
 		}
 	}
 
-	// Heuristic: If node has no text but has 1 child, collapse it (e.g., EXPRESSION -> TERM)
-	if (d->text.empty() && d->children.size() == 1) {
-		DrawNode* solo = d->children[0];
-		delete d;
-		return solo;
+	// 3. Leaf handling (Numbers, Identifiers)
+	if (d->text.empty() && children.size() == 1) {
+		if (std::holds_alternative<Token>(children[0])) {
+			d->text = std::get<Token>(children[0]).str;
+		} else {
+			DrawNode* solo = std::get<AST>(children[0]).build_draw_tree();
+			delete d;
+			return solo;
+		}
 	}
-	if (d->text.empty()) d->text = "?"; 
+
+	// 4. Fallback for structural nodes with no operator
+	if (d->text.empty()) d->text = types[type].name;
+
 	return d;
 }
 

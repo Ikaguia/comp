@@ -16,6 +16,7 @@ struct AST {
 		TYPE type;
 		std::string name;
 		std::vector<Pattern> patterns;
+		enum struct Associativity { LTR, RTL } associativity;
 	};
 	static const std::array<Type, COUNT> types;
 
@@ -24,7 +25,7 @@ struct AST {
 
 	static std::optional<AST> from_tokens(std::vector<Token> tks);
 
-	static std::optional<Match> match(std::span<Token> tks, TYPE type, bool full, Memoization& mem, int globalStart, int globalEnd, int depth=0);
+	static std::optional<Match> match(std::span<const Token> tks, TYPE type, bool full, Memoization& mem, int globalStart, int globalEnd, int depth=0);
 
 	std::string to_string() const;
 
