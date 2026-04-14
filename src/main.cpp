@@ -30,6 +30,7 @@ int main() {
 		if (ast) {
 			ast->render();
 			std::println("\nReconstructed: {}", ast->to_string());
+			std::println("Original:      {}", input);
 			// printAST(ast);
 		} else std::println("Falha em gerar AST");
 

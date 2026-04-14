@@ -11,7 +11,8 @@ struct AST {
 	static const std::array<TYPE, COUNT> TYPES;
 
 	using Token = Lexic::LexicTokenizer::Token;
-	using Pattern = std::vector<std::variant<Lexic::TYPE, TYPE>>;
+	using PatternElement = std::variant<Lexic::TYPE, TYPE>;
+	using Pattern = std::vector<PatternElement>;
 	struct Type {
 		TYPE type;
 		std::string name;
@@ -20,12 +21,14 @@ struct AST {
 	};
 	static const std::array<Type, COUNT> types;
 
-	using Match = std::pair<int, AST>;
-	using Memoization = std::map<std::tuple<int,int,bool,TYPE>, std::optional<Match>>;
+	struct MatchData {
+		std::span<const Token> tks;
+		std::map<std::tuple<int,int,TYPE>, std::optional<AST>> memoization;
+		std::map<Lexic::TYPE,std::vector<int>> indexList;
+	};
 
 	static std::optional<AST> from_tokens(std::vector<Token> tks);
-
-	static std::optional<Match> match(std::span<const Token> tks, TYPE type, bool full, Memoization& mem, int globalStart, int globalEnd, int depth=0);
+	static std::optional<AST> match(MatchData& in, int start, int end, TYPE type, int depth=0);
 
 	std::string to_string() const;
 
@@ -34,19 +37,20 @@ struct AST {
 	TYPE type;
 	std::vector<std::variant<AST,Token>> children{};
 
-
-	// ------------------------------------------------------ //
-
 	struct DrawNode {
 		std::string text;
 		int x = 0, y = 0;
 		int width = 0;
-		std::vector<DrawNode*> children{};
+		std::vector<std::unique_ptr<DrawNode>> children{};
+
+		DrawNode(std::string t) : text(std::move(t)) {}
+		DrawNode() = default;
 	};
 
 	void render() const;
+
 private:
-	DrawNode* build_draw_tree() const;
-	int calculate_layout(DrawNode* node, int x, int y, int& max_y) const;
-	void draw_to_canvas(DrawNode* node, std::vector<std::string>& canvas, int y_offset) const;
+	std::unique_ptr<DrawNode> build_draw_tree() const;
+	int calculate_layout(const std::unique_ptr<DrawNode>& node, int x, int y, int& max_y) const;
+	void draw_to_canvas(const std::unique_ptr<DrawNode>& node, std::vector<std::string>& canvas) const;
 };
