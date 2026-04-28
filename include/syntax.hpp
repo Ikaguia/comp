@@ -1,3 +1,5 @@
+#pragma once
+
 #include <variant>
 #include <optional>
 #include <vector>

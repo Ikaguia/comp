@@ -1,0 +1,6 @@
+/* long comment */
+x *=
+// short comment
+// short comment \
+   \ at the very end makes it multiline
+2 << 3 + (4 * 5)

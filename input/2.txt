@@ -1,0 +1,2 @@
+#define ABC 123
+x = ABC * 2

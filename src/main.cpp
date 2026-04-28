@@ -1,4 +1,4 @@
-// #include <preProcessing.hpp>
+#include <preProcessor.hpp>
 #include <lexic.hpp>
 #include <syntax.hpp>
 // #include <semantic.hpp>
@@ -20,6 +20,7 @@ int main() {
 		// SymbolTable symbols;
 		// ErrorHandler eh;
 		// input = PreProcessor::process(input, eh);
+		input = PreProcessor::process(input);
 
 		auto tokens = Lexic::tokenizer.tokenize(input);
 		// auto tokens = Token::tokenize(input, symbols, eh);
