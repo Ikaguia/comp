@@ -38,23 +38,23 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	ts[NUMBER] = Type{NUMBER, "Number", {
 		Pattern{Lexic::TYPE::NUMINT,},
 		Pattern{Lexic::TYPE::NUMREAL,},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[BOOLEAN] = Type{BOOLEAN, "Boolean", {
 		Pattern{Lexic::TYPE::BOOLTRUE,},
 		Pattern{Lexic::TYPE::BOOLFALSE,},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[LITERAL] = Type{LITERAL, "Literal", {
 		Pattern{NUMBER,},
 		Pattern{BOOLEAN,},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[PARENTHESIS] = Type{PARENTHESIS, "PARENTHESIS", {
 		Pattern{LITERAL,},
 		Pattern{Lexic::TYPE::IDENT},
 		Pattern{Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP1] = Type{OP1, "Operators | 1", {
 		Pattern{PARENTHESIS,},
@@ -64,7 +64,7 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{OP1, Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},       // Call (simplified)
 		Pattern{OP1, Lexic::TYPE::OPDOT, Lexic::TYPE::IDENT},                      // Member
 		Pattern{OP1, Lexic::TYPE::OPARROW, Lexic::TYPE::IDENT},                    // Pointer Member
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP2] = Type{OP2, "Operators | 2", {
 		Pattern{OP1,},
@@ -80,26 +80,26 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		// TODO:
 		// Cast
 		// Alignment requirement
-	}, Type::Associativity::RTL};
+	}};
 
 	ts[OP3] = Type{OP3, "Operators | 3", {
 		Pattern{OP2,},
 		Pattern{OP3, Lexic::TYPE::OPMUL, OP2},
 		Pattern{OP3, Lexic::TYPE::OPDIV, OP2},
 		Pattern{OP3, Lexic::TYPE::OPREM, OP2},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP4] = Type{OP4, "Operators | 4", {
 		Pattern{OP3,},
 		Pattern{OP4, Lexic::TYPE::OPSUM, OP3},
 		Pattern{OP4, Lexic::TYPE::OPSUB, OP3},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP5] = Type{OP5, "Operators | 5", {
 		Pattern{OP4,},
 		Pattern{OP5, Lexic::TYPE::OPSHL, OP4},
 		Pattern{OP5, Lexic::TYPE::OPSHR, OP4},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP6] = Type{OP6, "Operators | 6", {
 		Pattern{OP5,},
@@ -107,43 +107,43 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{OP6, Lexic::TYPE::OPLE, OP5},
 		Pattern{OP6, Lexic::TYPE::OPGT, OP5},
 		Pattern{OP6, Lexic::TYPE::OPGE, OP5},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP7] = Type{OP7, "Operators | 7", {
 		Pattern{OP6,},
 		Pattern{OP7, Lexic::TYPE::OPEQ, OP6},
 		Pattern{OP7, Lexic::TYPE::OPNEQ, OP6},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP8] = Type{OP8, "Operators | 8", {
 		Pattern{OP7,},
 		Pattern{OP8, Lexic::TYPE::OPAND, OP7},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP9] = Type{OP9, "Operators | 9", {
 		Pattern{OP8,},
 		Pattern{OP9, Lexic::TYPE::OPXOR, OP8},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP10] = Type{OP10, "Operators | 10", {
 		Pattern{OP9,},
 		Pattern{OP10, Lexic::TYPE::OPOR, OP9},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP11] = Type{OP11, "Operators | 11", {
 		Pattern{OP10,},
 		Pattern{OP11, Lexic::TYPE::OPLAND, OP10},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP12] = Type{OP12, "Operators | 12", {
 		Pattern{OP11,},
 		Pattern{OP12, Lexic::TYPE::OPLOR, OP11},
-	}, Type::Associativity::LTR};
+	}};
 
 	ts[OP13] = Type{OP13, "Operators | 13", {
 		Pattern{OP12,},
 		Pattern{OP12, Lexic::TYPE::OPCOND, EXPRESSION, Lexic::TYPE::OPCOLON, OP13},
-	}, Type::Associativity::RTL};
+	}};
 
 	ts[OP14] = Type{OP14, "Operators | 14", {
 		Pattern{OP13,},
@@ -158,16 +158,27 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{OP1, Lexic::TYPE::OPASGNAND, OP14},
 		Pattern{OP1, Lexic::TYPE::OPASGNXOR, OP14},
 		Pattern{OP1, Lexic::TYPE::OPASGNOR, OP14},
-	}, Type::Associativity::RTL};
+	}};
 
 	ts[OP15] = Type{OP15, "Operators | 15", {
 		Pattern{OP14,},
 		Pattern{OP15, Lexic::TYPE::OPCOMMA, OP14},
-	}, Type::Associativity::LTR};
+	}};
+
+	ts[DEFINITION] = Type{DEFINITION, "Definition", {
+		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+		Pattern{DEFINITION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+	}};
 
 	ts[EXPRESSION] = Type{EXPRESSION, "Expression", {
 		Pattern{OP15,},
-	}, Type::Associativity::LTR};
+		Pattern{DEFINITION,},
+	}};
+
+	ts[EXPRESSIONS] = Type{EXPRESSIONS, "Expressions", {
+		Pattern{EXPRESSION, Lexic::TYPE::OPSEMICOLON},
+		Pattern{EXPRESSION, Lexic::TYPE::OPSEMICOLON, EXPRESSIONS},
+	}};
 
 	return ts;
 }();
@@ -176,7 +187,7 @@ std::optional<AST> AST::from_tokens(std::vector<Token> tks) {
 	MatchData data{tks, {}, {}};
 	for (auto [idx, tk] : tks | std::views::enumerate) data.indexList[tk.type].push_back(idx);
 
-	auto mtch = match(data, 0, tks.size(), EXPRESSION);
+	auto mtch = match(data, 0, tks.size(), EXPRESSIONS);
 	if (mtch) return *mtch;
 	return std::nullopt;
 }

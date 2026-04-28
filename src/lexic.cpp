@@ -43,6 +43,7 @@ namespace Lexic {
 			Type{ TYPE::OPCOLON,	"OpColon",				R"(:)",				false, {} },
 			Type{ TYPE::OPCOMMA,	"OpComma",				R"(,)",				false, {} },
 			Type{ TYPE::OPDOT,		"OpDot",				R"(\.)",			false, {} },
+			Type{ TYPE::OPSEMICOLON,"OpSemicolon",			R"(;)",				false, {} },
 			Type{ TYPE::PAOPEN,		"ParOpen",				R"(\()",			false, {} },
 			Type{ TYPE::PACLOSE,	"ParClose",				R"(\))",			false, {} },
 			Type{ TYPE::OPBRKOPEN,	"BrkOpen",				R"(\[)",			false, {} },

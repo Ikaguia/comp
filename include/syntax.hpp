@@ -9,7 +9,7 @@
 #include <lexic.hpp>
 
 struct AST {
-	using TYPE = enum { NUMBER, BOOLEAN, LITERAL, PARENTHESIS, OP1, OP2, OP3, OP4, OP5, OP6, OP7, OP8, OP9, OP10, OP11, OP12, OP13, OP14, OP15, EXPRESSION, COUNT };
+	using TYPE = enum { NUMBER, BOOLEAN, LITERAL, PARENTHESIS, OP1, OP2, OP3, OP4, OP5, OP6, OP7, OP8, OP9, OP10, OP11, OP12, OP13, OP14, OP15, DEFINITION, EXPRESSION, EXPRESSIONS, COUNT };
 	static const std::array<TYPE, COUNT> TYPES;
 
 	using Token = Lexic::LexicTokenizer::Token;
@@ -19,7 +19,6 @@ struct AST {
 		TYPE type;
 		std::string name;
 		std::vector<Pattern> patterns;
-		enum struct Associativity { LTR, RTL } associativity;
 	};
 	static const std::array<Type, COUNT> types;
 
