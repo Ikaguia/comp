@@ -1,6 +1,6 @@
 #include <preProcessor.hpp>
 #include <lexic.hpp>
-#include <syntax.hpp>
+#include <syntax2.hpp>
 // #include <semantic.hpp>
 // #include <optimizer.hpp>
 // #include <assembler.hpp>
@@ -20,20 +20,22 @@ int main() {
 		// SymbolTable symbols;
 		// ErrorHandler eh;
 		// input = PreProcessor::process(input, eh);
-		input = PreProcessor::process(input);
+		// input = PreProcessor::process(input);
 
 		auto tokens = Lexic::tokenizer.tokenize(input);
 		// auto tokens = Token::tokenize(input, symbols, eh);
 		Lexic::tokenizer.print(tokens);
 
-		auto ast = AST::from_tokens(tokens);
-		// auto ast = AST::fromTokens(tokens, symbols, eh);
-		if (ast) {
-			ast->render();
-			std::println("\nReconstructed: {}", ast->to_string());
-			std::println("Original:      {}", input);
-			// printAST(ast);
-		} else std::println("Falha em gerar AST");
+		Syntax::analyze(tokens);
+
+		// auto ast = AST::from_tokens(tokens);
+		// // auto ast = AST::fromTokens(tokens, symbols, eh);
+		// if (ast) {
+		// 	ast->render();
+		// 	std::println("\nReconstructed: {}", ast->to_string());
+		// 	std::println("Original:      {}", input);
+		// 	// printAST(ast);
+		// } else std::println("Falha em gerar AST");
 
 		// auto intermediaryCode = Semantic::code(ast, symbols, eh);
 		// auto optimizedCode = Optimizer::optimize(intermediaryCode, symbols, eh);

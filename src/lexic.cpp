@@ -53,6 +53,7 @@ namespace Lexic {
 			Type{ TYPE::BOOLFALSE,	"BoolFalse",			R"(false|False)",	false, {} },
 			Type{ TYPE::SIZEOF,		"SizeOf",				R"(sizeof)",		false, {} },
 			Type{ TYPE::IDENT,		"Identifier",			R"([_A-Za-z]\w*)",	true,  {} },
+			Type{ TYPE::DELIMIT,	"Delimiter",			R"(;)",				false, {} },
 			Type{ TYPE::INVALID,	"Invalid",				R"([^\s])",			false, {} },
 		}
 	};
