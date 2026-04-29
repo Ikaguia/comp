@@ -1,0 +1,6 @@
+struct Point {
+	float x = 0.0, y=0.0;
+};
+Point p;
+p.x = 5.0;
+p.y = 10.5;

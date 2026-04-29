@@ -1,0 +1,7 @@
+float PI = 3.14;
+void foo(int a, float b = PI + 3) { print(a*b); }
+int x = 0, y = 3;
+if (x == 0) { x++; }
+x *= y;
+foo(x);
+foo(x, y);

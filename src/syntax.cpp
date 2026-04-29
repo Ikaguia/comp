@@ -36,38 +36,42 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	std::array<Type, COUNT> ts;
 
 	ts[NUMBER] = Type{NUMBER, "Number", {
-		Pattern{Lexic::TYPE::NUMINT,},
-		Pattern{Lexic::TYPE::NUMREAL,},
+		Pattern{Lexic::TYPE::NUMINT},
+		Pattern{Lexic::TYPE::NUMREAL},
 	}};
 
 	ts[BOOLEAN] = Type{BOOLEAN, "Boolean", {
-		Pattern{Lexic::TYPE::BOOLTRUE,},
-		Pattern{Lexic::TYPE::BOOLFALSE,},
+		Pattern{Lexic::TYPE::BOOLTRUE},
+	}};
+
+	ts[VARTYPE] = Type{VARTYPE, "Type", {
+		// TODO: Support multi-word types, like long long
+		Pattern{Lexic::TYPE::IDENT},
 	}};
 
 	ts[LITERAL] = Type{LITERAL, "Literal", {
-		Pattern{NUMBER,},
-		Pattern{BOOLEAN,},
+		Pattern{NUMBER},
+		Pattern{BOOLEAN},
 	}};
 
-	ts[PARENTHESIS] = Type{PARENTHESIS, "PARENTHESIS", {
-		Pattern{LITERAL,},
+	ts[PARENTHESIS] = Type{PARENTHESIS, "Parenthesis", {
+		Pattern{LITERAL},
 		Pattern{Lexic::TYPE::IDENT},
 		Pattern{Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},
 	}};
 
 	ts[OP1] = Type{OP1, "Operators | 1", {
-		Pattern{PARENTHESIS,},
+		Pattern{PARENTHESIS},
 		Pattern{OP1, Lexic::TYPE::OPINC},
 		Pattern{OP1, Lexic::TYPE::OPDEC},
-		Pattern{OP1, Lexic::TYPE::OPBRKOPEN, EXPRESSION, Lexic::TYPE::OPBRKCLOSE}, // Subscript
+		Pattern{OP1, Lexic::TYPE::SQBRKOPEN, EXPRESSION, Lexic::TYPE::SQBRKCLOSE}, // Subscript
 		Pattern{OP1, Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},       // Call (simplified)
 		Pattern{OP1, Lexic::TYPE::OPDOT, Lexic::TYPE::IDENT},                      // Member
 		Pattern{OP1, Lexic::TYPE::OPARROW, Lexic::TYPE::IDENT},                    // Pointer Member
 	}};
 
 	ts[OP2] = Type{OP2, "Operators | 2", {
-		Pattern{OP1,},
+		Pattern{OP1},
 		Pattern{Lexic::TYPE::OPINC, OP2},
 		Pattern{Lexic::TYPE::OPDEC, OP2},
 		Pattern{Lexic::TYPE::OPSUM, OP2},
@@ -83,26 +87,26 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 
 	ts[OP3] = Type{OP3, "Operators | 3", {
-		Pattern{OP2,},
+		Pattern{OP2},
 		Pattern{OP3, Lexic::TYPE::OPMUL, OP2},
 		Pattern{OP3, Lexic::TYPE::OPDIV, OP2},
 		Pattern{OP3, Lexic::TYPE::OPREM, OP2},
 	}};
 
 	ts[OP4] = Type{OP4, "Operators | 4", {
-		Pattern{OP3,},
+		Pattern{OP3},
 		Pattern{OP4, Lexic::TYPE::OPSUM, OP3},
 		Pattern{OP4, Lexic::TYPE::OPSUB, OP3},
 	}};
 
 	ts[OP5] = Type{OP5, "Operators | 5", {
-		Pattern{OP4,},
+		Pattern{OP4},
 		Pattern{OP5, Lexic::TYPE::OPSHL, OP4},
 		Pattern{OP5, Lexic::TYPE::OPSHR, OP4},
 	}};
 
 	ts[OP6] = Type{OP6, "Operators | 6", {
-		Pattern{OP5,},
+		Pattern{OP5},
 		Pattern{OP6, Lexic::TYPE::OPLT, OP5},
 		Pattern{OP6, Lexic::TYPE::OPLE, OP5},
 		Pattern{OP6, Lexic::TYPE::OPGT, OP5},
@@ -110,43 +114,43 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 
 	ts[OP7] = Type{OP7, "Operators | 7", {
-		Pattern{OP6,},
+		Pattern{OP6},
 		Pattern{OP7, Lexic::TYPE::OPEQ, OP6},
 		Pattern{OP7, Lexic::TYPE::OPNEQ, OP6},
 	}};
 
 	ts[OP8] = Type{OP8, "Operators | 8", {
-		Pattern{OP7,},
+		Pattern{OP7},
 		Pattern{OP8, Lexic::TYPE::OPAND, OP7},
 	}};
 
 	ts[OP9] = Type{OP9, "Operators | 9", {
-		Pattern{OP8,},
+		Pattern{OP8},
 		Pattern{OP9, Lexic::TYPE::OPXOR, OP8},
 	}};
 
 	ts[OP10] = Type{OP10, "Operators | 10", {
-		Pattern{OP9,},
+		Pattern{OP9},
 		Pattern{OP10, Lexic::TYPE::OPOR, OP9},
 	}};
 
 	ts[OP11] = Type{OP11, "Operators | 11", {
-		Pattern{OP10,},
+		Pattern{OP10},
 		Pattern{OP11, Lexic::TYPE::OPLAND, OP10},
 	}};
 
 	ts[OP12] = Type{OP12, "Operators | 12", {
-		Pattern{OP11,},
+		Pattern{OP11},
 		Pattern{OP12, Lexic::TYPE::OPLOR, OP11},
 	}};
 
 	ts[OP13] = Type{OP13, "Operators | 13", {
-		Pattern{OP12,},
+		Pattern{OP12},
 		Pattern{OP12, Lexic::TYPE::OPCOND, EXPRESSION, Lexic::TYPE::OPCOLON, OP13},
 	}};
 
 	ts[OP14] = Type{OP14, "Operators | 14", {
-		Pattern{OP13,},
+		Pattern{OP13},
 		Pattern{OP1, Lexic::TYPE::OPASGN, OP14},
 		Pattern{OP1, Lexic::TYPE::OPASGNSUM, OP14},
 		Pattern{OP1, Lexic::TYPE::OPASGNSUB, OP14},
@@ -161,95 +165,184 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 
 	ts[OP15] = Type{OP15, "Operators | 15", {
-		Pattern{OP14,},
+		Pattern{OP14},
 		Pattern{OP15, Lexic::TYPE::OPCOMMA, OP14},
 	}};
 
-	ts[DEFINITION] = Type{DEFINITION, "Definition", {
-		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
-		Pattern{DEFINITION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+	ts[DECLARATION] = Type{DECLARATION, "Declaration", {
+		Pattern{VARTYPE, Lexic::TYPE::IDENT},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT},
+		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+	}};
+
+	ts[IF] = Type{IF, "If", {
+		Pattern{Lexic::TYPE::IF, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE, STATEMENT},
+		Pattern{Lexic::TYPE::IF, Lexic::TYPE::PAOPEN, DECLARATION, Lexic::TYPE::OPSEMICOLON, OP15, Lexic::TYPE::PACLOSE, STATEMENT},
+	}};
+
+	ts[IFELSE] = Type{IFELSE, "If Else", {
+		Pattern{IF, Lexic::TYPE::ELSE, STATEMENT},
+	}};
+
+	ts[WHILE] = Type{WHILE, "While", {
+		Pattern{Lexic::TYPE::WHILE, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE, STATEMENT},
+		Pattern{Lexic::TYPE::WHILE, Lexic::TYPE::PAOPEN, DECLARATION, Lexic::TYPE::OPSEMICOLON, OP15, Lexic::TYPE::PACLOSE, STATEMENT},
+	}};
+
+	ts[DOWHILE] = Type{DOWHILE, "Do While", {
+		Pattern{Lexic::TYPE::DO, STATEMENT, Lexic::TYPE::WHILE, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE, Lexic::TYPE::OPSEMICOLON},
+		Pattern{Lexic::TYPE::DO, STATEMENT, Lexic::TYPE::WHILE, Lexic::TYPE::PAOPEN, DECLARATION, Lexic::TYPE::OPSEMICOLON, OP15, Lexic::TYPE::PACLOSE, Lexic::TYPE::OPSEMICOLON},
+	}};
+
+	ts[FUNC] = Type{FUNC, "Function Definition", {
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, Lexic::TYPE::PACLOSE, BLOCK},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, FUNCPARS, Lexic::TYPE::PACLOSE, BLOCK},
+	}};
+
+	ts[FUNCPAR] = Type{FUNCPAR, "Function Parameter", {
+		Pattern{VARTYPE, Lexic::TYPE::IDENT},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP13},
+	}};
+
+	ts[FUNCPARS] = Type{FUNCPARS, "Function Paramenters", {
+		Pattern{FUNCPAR},
+		Pattern{FUNCPARS, Lexic::TYPE::OPCOMMA, FUNCPAR},
+	}};
+
+	ts[FUNCDEC] = Type{FUNCDEC, "Function Declaration", {
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, Lexic::TYPE::PACLOSE, Lexic::TYPE::OPSEMICOLON},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, FUNCDECPARS, Lexic::TYPE::PACLOSE, Lexic::TYPE::OPSEMICOLON},
+	}};
+
+	ts[FUNCDECPAR] = Type{FUNCDECPAR, "Function Declaration Parameter", {
+		Pattern{VARTYPE},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP13},
+	}};
+
+	ts[FUNCDECPARS] = Type{FUNCDECPARS, "Function Declaration Paramenters", {
+		Pattern{FUNCDECPAR},
+		Pattern{FUNCDECPARS, Lexic::TYPE::OPCOMMA, FUNCDECPAR},
+	}};
+
+	ts[STRUCT] = Type{STRUCT, "Struct Definition", {
+		Pattern{Lexic::TYPE::STRUCT, Lexic::TYPE::IDENT, Lexic::TYPE::CRLBRKOPEN, Lexic::TYPE::CRLBRKCLOSE, Lexic::TYPE::OPSEMICOLON},
+		Pattern{Lexic::TYPE::STRUCT, Lexic::TYPE::IDENT, Lexic::TYPE::CRLBRKOPEN, STRUCTPROPS, Lexic::TYPE::CRLBRKCLOSE, Lexic::TYPE::OPSEMICOLON},
+	}};
+
+	ts[STRUCTPROPS] = Type{STRUCTPROPS, "Struct Properties", {
+		Pattern{DECLARATION, Lexic::TYPE::OPSEMICOLON},
+		Pattern{DECLARATION, Lexic::TYPE::OPSEMICOLON, STRUCTPROPS},
 	}};
 
 	ts[EXPRESSION] = Type{EXPRESSION, "Expression", {
-		Pattern{OP15,},
-		Pattern{DEFINITION,},
+		Pattern{OP15},
 	}};
 
-	ts[EXPRESSIONS] = Type{EXPRESSIONS, "Expressions", {
+	ts[STATEMENT] = Type{STATEMENT, "Statement", {
+		Pattern{Lexic::TYPE::OPSEMICOLON},
 		Pattern{EXPRESSION, Lexic::TYPE::OPSEMICOLON},
-		Pattern{EXPRESSION, Lexic::TYPE::OPSEMICOLON, EXPRESSIONS},
+		Pattern{DECLARATION, Lexic::TYPE::OPSEMICOLON},
+		Pattern{IF},
+		Pattern{IFELSE},
+		Pattern{WHILE},
+		Pattern{DOWHILE},
+		Pattern{FUNC},
+		Pattern{FUNCDEC},
+		Pattern{STRUCT},
+		Pattern{BLOCK},
+	}};
+
+	ts[BLOCK] = Type{BLOCK, "Block", {
+		Pattern{Lexic::TYPE::CRLBRKOPEN, CODE, Lexic::TYPE::CRLBRKCLOSE},
+	}};
+
+	ts[CODE] = Type{CODE, "Code", {
+		Pattern{STATEMENT},
+		Pattern{STATEMENT, CODE},
 	}};
 
 	return ts;
 }();
 
+void clean(AST& ast) {
+    for (auto& child : ast.children) if (std::holds_alternative<AST>(child)) clean(std::get<AST>(child));
+
+    std::vector<std::variant<AST, AST::Token>> flattened;
+    flattened.reserve(ast.children.size());
+
+	if (ast.type != TYPE::CODE) return;
+
+	for (auto& child : ast.children) {
+        if (std::holds_alternative<AST>(child)) {
+            auto& child_ast = std::get<AST>(child);
+
+            if (child_ast.type == TYPE::CODE) {
+                for (auto& grandchild : child_ast.children) flattened.push_back(std::move(grandchild));
+            } else flattened.push_back(std::move(child));
+        } else flattened.push_back(std::move(child));
+    }
+
+    ast.children = std::move(flattened);
+}
+
 std::optional<AST> AST::from_tokens(std::vector<Token> tks) {
 	MatchData data{tks, {}, {}};
 	for (auto [idx, tk] : tks | std::views::enumerate) data.indexList[tk.type].push_back(idx);
 
-	auto mtch = match(data, 0, tks.size(), EXPRESSIONS);
-	if (mtch) return *mtch;
+	auto mtch = match(data, 0, tks.size(), CODE);
+	if (mtch) {
+		clean(*mtch);
+		return *mtch;
+	}
 	return std::nullopt;
-}
-
-std::generator<std::vector<int>> gen_static_idxs(AST::MatchData& data, int start, int end, std::span<const AST::PatternElement> els, bool full=true) {
-	if (els.empty()) {
-		if (start == end || !full) co_yield {};
-		co_return;
-	}
-
-	const AST::PatternElement& el = els.front();
-	if (std::holds_alternative<Lexic::TYPE>(el)) {
-		auto tp = std::get<Lexic::TYPE>(el);
-		auto iter_nxt = std::lower_bound(data.indexList[tp].begin(), data.indexList[tp].end(), start);
-		if (iter_nxt == data.indexList[tp].end()) co_return;
-		auto idx = *iter_nxt;
-		if (full) {
-			if (idx != start) co_return;
-			for (auto range : gen_static_idxs(data, start+1, end, els.subspan(1), true)) {
-				range.push_back(start);
-				co_yield range;
-			}
-		} else {
-			while(idx < end) {
-				for (auto range : gen_static_idxs(data, idx+1, end, els.subspan(1), true)) {
-					range.push_back(idx);
-					co_yield range;
-				}
-				iter_nxt++;
-				if (iter_nxt == data.indexList[tp].end()) break;
-				idx = *iter_nxt;
-			}
-		}
-	} else if (std::holds_alternative<TYPE>(el)) {
-		co_yield std::ranges::elements_of(gen_static_idxs(data, start, end, els.subspan(1), false));
-	}
 }
 
 using Range = std::pair<int,int>;
 using Ranges = std::vector<Range>;
 std::generator<Ranges> gen_ranges(AST::MatchData& data, int start, int end, std::span<const AST::PatternElement> els) {
-	if (els.size() == 1 && std::holds_alternative<TYPE>(els.front())) {
-		co_yield Ranges{Range{start, end}};
+	// std::println("DEBUG: gen_ranges, [{}, {}), {}", start, end, els.size());
+
+	if (els.empty()) {
+		if (start == end) co_yield {};
 		co_return;
 	}
 
-	size_t dyn_els_count = 0;
-	for (auto el : els) if (std::holds_alternative<TYPE>(el)) dyn_els_count++;
+	if (els.size() == 1 && std::holds_alternative<TYPE>(els.front())) {
+		// std::println("DEBUG: gen_ranges, first if");
+        co_yield Ranges{Range{start, end}};
+        co_return;
+    }
 
-	for (auto static_idxs : gen_static_idxs(data, start, end, els)) {
-		int rg_start = start;
-		Ranges out;
-		for (auto rg_end : static_idxs | std::views::reverse) {
-			if (rg_end != rg_start) out.emplace_back(rg_start, rg_end);
-			rg_start = rg_end+1;
-		}
-		if (rg_start < end) out.emplace_back(rg_start, end);
-		if (out.size() != dyn_els_count) continue;
-		co_yield out;
-	}
+	// first el in pattern is non-terminal
+    if (std::holds_alternative<TYPE>(els.front())) {
+		// std::println("DEBUG: gen_ranges, second if");
+        for (int split = start; split <= end; split++) {
+			// std::println("DEBUG: gen_ranges, split {}", split);
+            for (auto sub_ranges : gen_ranges(data, split, end, els.subspan(1))) {
+                Ranges out;
+                out.emplace_back(start, split);
+                out.insert(out.end(), sub_ranges.begin(), sub_ranges.end());
+                co_yield out;
+            }
+        }
+    }
+	// first el in pattern is terminal
+	else if (std::holds_alternative<Lexic::TYPE>(els.front())) {
+		// std::println("DEBUG: gen_ranges, third if");
+        auto tp = std::get<Lexic::TYPE>(els.front());
+        auto it = std::lower_bound(data.indexList[tp].begin(), data.indexList[tp].end(), start);
+        while (it != data.indexList[tp].end() && *it < end) {
+            int anchor_idx = *it;
+			// std::println("DEBUG: gen_ranges, anchor_idx = {}", anchor_idx);
+            if (anchor_idx == start) {
+                for (auto sub_ranges : gen_ranges(data, anchor_idx + 1, end, els.subspan(1))) co_yield sub_ranges;
+            }
+            it++;
+        }
+    }
 }
-
 std::optional<AST> AST::match(MatchData& data, int start, int end, TYPE type, int depth) {
 	auto& [tks, memoization, indexList] = data;
 	if (memoization.contains({start, end, type})) return memoization[{start, end, type}];
@@ -262,7 +355,6 @@ std::optional<AST> AST::match(MatchData& data, int start, int end, TYPE type, in
 
 	const auto& tp = types[type];
 	const auto& pats = tp.patterns;
-	// bool isRTL = tp.associativity == Type::Associativity::RTL;
 
 	for (auto& pat : pats | std::views::reverse) {
 		for(int i=0;i<depth;i++)std::print("\t");
@@ -387,6 +479,30 @@ void AST::render() const {
     }
 }
 
+std::set<Lexic::TYPE> not_pivot = {
+	Lexic::TYPE::IDENT,
+	Lexic::TYPE::NUMINT,
+	Lexic::TYPE::NUMREAL,
+	Lexic::TYPE::BOOLTRUE,
+	Lexic::TYPE::BOOLFALSE,
+	Lexic::TYPE::PAOPEN,
+	Lexic::TYPE::PACLOSE,
+	Lexic::TYPE::SQBRKOPEN,
+	Lexic::TYPE::SQBRKCLOSE,
+	Lexic::TYPE::CRLBRKOPEN,
+	Lexic::TYPE::CRLBRKCLOSE,
+	Lexic::TYPE::OPSEMICOLON,
+}, delimiters = {
+	Lexic::TYPE::PAOPEN,
+	Lexic::TYPE::PACLOSE,
+	Lexic::TYPE::SQBRKOPEN,
+	Lexic::TYPE::SQBRKCLOSE,
+	Lexic::TYPE::CRLBRKOPEN,
+	Lexic::TYPE::CRLBRKCLOSE,
+	Lexic::TYPE::OPSEMICOLON,
+};
+
+
 std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
     auto d = std::make_unique<DrawNode>();
 
@@ -395,10 +511,7 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
     for (int i = 0; i < std::ssize(children); ++i) {
         if (std::holds_alternative<Token>(children[i])) {
             const auto& t = std::get<Token>(children[i]);
-            if (t.type != Lexic::TYPE::IDENT && t.type != Lexic::TYPE::NUMINT && 
-                t.type != Lexic::TYPE::NUMREAL && t.type != Lexic::TYPE::BOOLTRUE &&
-                t.type != Lexic::TYPE::BOOLFALSE && t.type != Lexic::TYPE::PAOPEN && 
-                t.type != Lexic::TYPE::PACLOSE) {
+			if (!not_pivot.contains(t.type)) {
                 pivot_idx = i;
                 break; 
             }
@@ -415,7 +528,7 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
 
         if (std::holds_alternative<Token>(children[i])) {
             const auto& t = std::get<Token>(children[i]);
-            if (t.type == Lexic::TYPE::PAOPEN || t.type == Lexic::TYPE::PACLOSE) continue;
+			if (delimiters.contains(t.type)) continue;
             d->children.push_back(std::make_unique<DrawNode>(t.str));
         } else {
             d->children.push_back(std::get<AST>(children[i]).build_draw_tree());

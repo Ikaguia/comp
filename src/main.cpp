@@ -33,7 +33,10 @@ int main() {
 			std::println("\nReconstructed: {}", ast->to_string());
 			std::println("Original:      {}", input);
 			// printAST(ast);
-		} else std::println("Falha em gerar AST");
+		} else {
+			std::println("Falha em gerar AST");
+			Lexic::tokenizer.print(tokens);
+		}
 
 		// auto intermediaryCode = Semantic::code(ast, symbols, eh);
 		// auto optimizedCode = Optimizer::optimize(intermediaryCode, symbols, eh);
