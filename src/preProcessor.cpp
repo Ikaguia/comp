@@ -54,7 +54,7 @@ namespace PreProcessor {
 			idx2++;																								\
 			if (idx2 >= static_cast<int>(tks.size())) throw std::runtime_error("Unfinished macro definition");	\
 			tk2 = tks[idx2];																					\
-			std::println("NXT called, tk2 = {}, {}", tk2.str, static_cast<size_t>(tk2.type));					\
+			/* std::println("NXT called, tk2 = {}, {}", tk2.str, static_cast<size_t>(tk2.type)); */				\
 		} while (tk2.type == TYPE::WSPC);
 
 	std::string process(const std::string& input) {
@@ -63,7 +63,7 @@ namespace PreProcessor {
 		std::map<std::string, Defined> defined;
 
 		auto tks = tokenizer.tokenize(input2);
-		tokenizer.print(tks);
+		// tokenizer.print(tks);
 
 		int line=0, col=0, skip=0;
 		// enum struct STATE { DEFAULT, DEFINING_NAME, DEFINING_CONTENT, INVALID } state=STATE::DEFAULT;
