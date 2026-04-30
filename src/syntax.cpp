@@ -65,7 +65,8 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{OP1, Lexic::TYPE::OPINC},
 		Pattern{OP1, Lexic::TYPE::OPDEC},
 		Pattern{OP1, Lexic::TYPE::SQBRKOPEN, EXPRESSION, Lexic::TYPE::SQBRKCLOSE}, // Subscript
-		Pattern{OP1, Lexic::TYPE::PAOPEN, EXPRESSION, Lexic::TYPE::PACLOSE},       // Call (simplified)
+		Pattern{OP1, Lexic::TYPE::PAOPEN, ARGS, Lexic::TYPE::PACLOSE},             // Call (simplified)
+		Pattern{NFUNCCALL},
 		Pattern{OP1, Lexic::TYPE::OPDOT, Lexic::TYPE::IDENT},                      // Member
 		Pattern{OP1, Lexic::TYPE::OPARROW, Lexic::TYPE::IDENT},                    // Pointer Member
 	}};
@@ -169,11 +170,37 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{OP15, Lexic::TYPE::OPCOMMA, OP14},
 	}};
 
+	ts[ARG] = Type{ARG, "Argument", {
+		Pattern{OP15},
+	}};
+
+	ts[ARGS] = Type{ARGS, "Argument List", {
+		Pattern{ARG},
+		Pattern{ARGS, Lexic::TYPE::OPCOMMA, ARG},
+	}};
+
+	ts[NARG] = Type{NARG, "Named Argument", {
+		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::OPCOLON, OP15},
+	}};
+
+	ts[NARGS] = Type{NARGS, "Named Argument List", {
+		Pattern{NARG},
+		Pattern{NARGS, Lexic::TYPE::OPCOMMA, NARG},
+	}};
+
 	ts[DECLARATION] = Type{DECLARATION, "Declaration", {
 		Pattern{VARTYPE, Lexic::TYPE::IDENT},
 		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE},
+		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::CRLBRKOPEN, NARGS, Lexic::TYPE::CRLBRKCLOSE},
 		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT},
 		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
+		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE},
+		Pattern{DECLARATION, Lexic::TYPE::OPCOMMA, Lexic::TYPE::IDENT, Lexic::TYPE::CRLBRKOPEN, NARGS, Lexic::TYPE::CRLBRKCLOSE},
+	}};
+
+	ts[NFUNCCALL] = Type{NFUNCCALL, "Named Function Call", {
+		Pattern{OP1, Lexic::TYPE::CRLBRKOPEN, NARGS, Lexic::TYPE::CRLBRKCLOSE},
 	}};
 
 	ts[IF] = Type{IF, "If", {
@@ -238,6 +265,7 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 
 	ts[EXPRESSION] = Type{EXPRESSION, "Expression", {
 		Pattern{OP15},
+		Pattern{Lexic::TYPE::RETURN, OP15},
 	}};
 
 	ts[STATEMENT] = Type{STATEMENT, "Statement", {
@@ -266,19 +294,27 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	return ts;
 }();
 
+std::set<AST::TYPE> toFlatten = {
+	AST::TYPE::CODE,
+	AST::TYPE::ARGS,
+	AST::TYPE::NARGS,
+	AST::TYPE::FUNCPARS,
+	AST::TYPE::FUNCDECPARS,
+};
+
 void clean(AST& ast) {
     for (auto& child : ast.children) if (std::holds_alternative<AST>(child)) clean(std::get<AST>(child));
 
     std::vector<std::variant<AST, AST::Token>> flattened;
     flattened.reserve(ast.children.size());
 
-	if (ast.type != TYPE::CODE) return;
+	if (!toFlatten.contains(ast.type)) return;
 
 	for (auto& child : ast.children) {
         if (std::holds_alternative<AST>(child)) {
             auto& child_ast = std::get<AST>(child);
 
-            if (child_ast.type == TYPE::CODE) {
+            if (child_ast.type == ast.type) {
                 for (auto& grandchild : child_ast.children) flattened.push_back(std::move(grandchild));
             } else flattened.push_back(std::move(child));
         } else flattened.push_back(std::move(child));
@@ -518,7 +554,8 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
         }
     }
 
-    if (pivot_idx) {
+	d->text = types[type].name; // e.g., "Expression"
+	if (d->text.starts_with("Operators |") && pivot_idx) {
         d->text = std::get<Token>(children[*pivot_idx]).str;
     }
 
@@ -536,18 +573,14 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
     }
 
     // 3. Collapse structural nodes
-    if (d->text.empty()) {
-        if (d->children.size() == 1) {
-            return std::move(d->children[0]);
-        }
-        // If it's a leaf literal/ident that didn't have a pivot
-        if (children.size() == 1 && std::holds_alternative<Token>(children[0])) {
-            d->text = std::get<Token>(children[0]).str;
-            d->children.clear();
-        } else {
-            d->text = types[type].name; // e.g., "Expression"
-        }
-    }
+	if (d->children.size() == 1 && std::holds_alternative<AST>(children[0])) {
+		return std::move(d->children[0]);
+	}
+	// If it's a leaf literal/ident that didn't have a pivot
+	if (children.size() == 1 && std::holds_alternative<Token>(children[0])) {
+		d->text = std::get<Token>(children[0]).str;
+		d->children.clear();
+	}
 
     return d;
 }

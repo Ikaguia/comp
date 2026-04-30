@@ -60,6 +60,7 @@ namespace Lexic {
 			Type{ TYPE::WHILE,		"While",				R"(while)",			false, {} },
 			Type{ TYPE::DO,			"Do",					R"(do)",			false, {} },
 			Type{ TYPE::STRUCT,		"Struct",				R"(struct)",		false, {} },
+			Type{ TYPE::RETURN,		"Return",				R"(return)",		false, {} },
 			Type{ TYPE::IDENT,		"Identifier",			R"([_A-Za-z]\w*)",	true,  {} },
 			Type{ TYPE::INVALID,	"Invalid",				R"([^\s])",			false, {} },
 		}
