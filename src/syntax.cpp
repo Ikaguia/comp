@@ -188,13 +188,6 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 		Pattern{NARGS, Lexic::TYPE::OPCOMMA, NARG},
 	}};
 
-	ts[FDECLARATION] = Type{FDECLARATION, "Declaration", {
-		Pattern{VARTYPE, Lexic::TYPE::IDENT},
-		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
-		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::PAOPEN, OP15, Lexic::TYPE::PACLOSE},
-		Pattern{VARTYPE, Lexic::TYPE::IDENT, Lexic::TYPE::CRLBRKOPEN, NARGS, Lexic::TYPE::CRLBRKCLOSE},
-	}};
-
 	ts[DECLARATION] = Type{DECLARATION, "Declaration", {
 		Pattern{Lexic::TYPE::IDENT},
 		Pattern{Lexic::TYPE::IDENT, Lexic::TYPE::OPASGN, OP15},
@@ -203,7 +196,7 @@ const std::array<Type, AST::COUNT> AST::types = [] {
 	}};
 
 	ts[DECLARATIONS] = Type{DECLARATIONS, "Declarations", {
-		Pattern{FDECLARATION},
+		Pattern{VARTYPE, DECLARATION},
 		Pattern{DECLARATIONS, Lexic::TYPE::OPCOMMA, DECLARATION},
 	}};
 
@@ -585,7 +578,7 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
 
 	// 1. Identify Pivot Index
 	std::optional<int> pivot_idx;
-	for (int i = 0; i < std::ssize(children); ++i) {
+	if (std::ssize(children) > 1) for (int i = 0; i < std::ssize(children); ++i) {
 		if (std::holds_alternative<Token>(children[i])) {
 			const auto& t = std::get<Token>(children[i]);
 			if (!not_pivot.contains(t.type)) {
@@ -614,9 +607,7 @@ std::unique_ptr<AST::DrawNode> AST::build_draw_tree() const {
 	}
 
 	// 3. Collapse structural nodes
-	if (d->children.size() == 1 && collapsible.contains(type)) {
-		return std::move(d->children[0]);
-	}
+	if (d->children.size() == 1 && !pivot_idx && collapsible.contains(type)) return std::move(d->children[0]);
 
 	return d;
 }
